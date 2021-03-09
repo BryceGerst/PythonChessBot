@@ -2,11 +2,11 @@ import sys, random
 sys.path.append('../ChessEngine/')
 from MonteCarloTreeSearch import MCTS
 from Game import Game
-from NNet import NNetWrapper
+from NNet import NNet
 import numpy as np
 
 def init_nnet():
-    return NNetWrapper()
+    return NNet()
 
 def train_nnet(num_iters, num_episodes):
     nnet = init_nnet()
@@ -69,6 +69,7 @@ def execute_episode(nnet, num_sims = 1): # 800 is probably too big for our taste
         whites_turn = not whites_turn
 
 def assign_rewards(examples, reward, whites_turn):
+    # iterate backwards starting with -reward and negating it every time and I don't need to keep track of whites_turn
     if (whites_turn):
         start = reward
     else:

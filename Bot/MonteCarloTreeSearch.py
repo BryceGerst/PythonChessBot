@@ -30,7 +30,7 @@ class MCTS:
 
         if (s not in self.visited):
             self.visited.add(s)
-            self.P[s], v = nnet.predict([game.get_nnet_inputs()])
+            self.P[s], v = nnet.predict(game.get_nnet_inputs())
             self.Q[s] = np.zeros([4672], np.dtype(float))
             self.N[s] = np.zeros([4672], np.dtype(float))
             return -v

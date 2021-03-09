@@ -80,26 +80,24 @@ class Board:
         self.gen_legal_moves()
 
     def nnet_inputs(self):
-        inputs = []
+        num_channels = 12 # should be upped to 19 eventually!!
         
-        player_pawns = np.zeros([8,8], np.dtype(bool))
-        player_rooks = np.zeros([8,8], np.dtype(bool))
-        player_bishops = np.zeros([8,8], np.dtype(bool))
-        player_knights = np.zeros([8,8], np.dtype(bool))
-        player_queens = np.zeros([8,8], np.dtype(bool))
-        player_kings = np.zeros([8,8], np.dtype(bool))
-        enemy_pawns = np.zeros([8,8], np.dtype(bool))
-        enemy_rooks = np.zeros([8,8], np.dtype(bool))
-        enemy_bishops = np.zeros([8,8], np.dtype(bool))
-        enemy_knights = np.zeros([8,8], np.dtype(bool))
-        enemy_queens = np.zeros([8,8], np.dtype(bool))
-        enemy_kings = np.zeros([8,8], np.dtype(bool))
+        inputs = np.zeros([self.num_rows, self.num_cols, num_channels], np.dtype(float))
+
         player_color = self.team_to_move
         total_moves = self.total_moves
         moves_since_advancement = self.moves_since_advancement
 
         player_castling = self.get_castling_rights(player_color)
         enemy_castling = self.get_castling_rights(not player_color)
+
+        # the following are the channel numbers of each piece type, with 6 being added if the piece is on the enemy team
+        pawn_num = 0
+        rook_num = 1
+        bishop_num = 2
+        knight_num = 3
+        queen_num = 4
+        king_num = 5
 
         all_pieces = []
         for piece in self.pieces:
@@ -116,54 +114,21 @@ class Board:
             else:
                 row = 7 - piece.row # the board needs to be input oriented according to the player moving
                 col = piece.col
+            modifier = 0 if (player_color == piece.team) else 6
             if (piece.name == "Pawn"):
-                if (piece.team == player_color):
-                    player_pawns[row][col] = True
-                else:
-                    enemy_pawns[row][col] = True
+                inputs[row][col][pawn_num + modifier] = 1
             elif (piece.name == "Rook"):
-                if (piece.team == player_color):
-                    player_rooks[row][col] = True
-                else:
-                    enemy_rooks[row][col] = True
+                inputs[row][col][rook_num + modifier] = 1
             elif (piece.name == "Bishop"):
-                if (piece.team == player_color):
-                    player_bishops[row][col] = True
-                else:
-                    enemy_bishops[row][col] = True
+                inputs[row][col][bishop_num + modifier] = 1
             elif (piece.name == "Knight"):
-                if (piece.team == player_color):
-                    player_knights[row][col] = True
-                else:
-                    enemy_knights[row][col] = True
+                inputs[row][col][knight_num + modifier] = 1
             elif (piece.name == "Queen"):
-                if (piece.team == player_color):
-                    player_queens[row][col] = True
-                else:
-                    enemy_queens[row][col] = True
+                inputs[row][col][queen_num + modifier] = 1
             elif (piece.name == "King"):
-                if (piece.team == player_color):
-                    player_kings[row][col] = True
-                else:
-                    enemy_kings[row][col] = True
-        
-        inputs.append(player_pawns)
-        inputs.append(player_rooks)
-        inputs.append(player_bishops)
-        inputs.append(player_knights)
-        inputs.append(player_queens)
-        inputs.append(player_kings)
-        inputs.append(enemy_pawns)
-        inputs.append(enemy_rooks)
-        inputs.append(enemy_bishops)
-        inputs.append(enemy_knights)
-        inputs.append(enemy_queens)
-        inputs.append(enemy_kings)
-        #inputs.append(player_color)
-        #inputs.append(total_moves)
-        #inputs.append(moves_since_advancement)
-        #inputs.append(player_castling)
-        #inputs.append(enemy_castling)
+                inputs[row][col][king_num + modifier] = 1
+
+        # TODO: add 6 more layers composed of the player's color, total moves, move since advancement, and castling rights for both teams
 
         return inputs
         
