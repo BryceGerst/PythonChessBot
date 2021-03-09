@@ -24,9 +24,9 @@ class AlphaModel(Model):
     def __init__(self):
         super(AlphaModel, self).__init__()
 
-        # sparse categorical cross entropy is the loss function for the policy
+        # categorical cross entropy is the loss function for the policy
         # mean squared error is the loss function for the value
-        self.loss_objects = [tf.keras.losses.SparseCategoricalCrossentropy(from_logits = False), tf.keras.losses.MeanSquaredError()]
+        self.loss_objects = [tf.keras.losses.CategoricalCrossentropy(from_logits = False), tf.keras.losses.MeanSquaredError()]
 
         # input layer
         self.input_layer = Conv2D(input_shape = (board_height, board_width, num_channels), filters = 256, kernel_size=(3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)
@@ -59,6 +59,8 @@ class AlphaModel(Model):
         self.value_two = Dense(units = 256, activation = 'relu', use_bias = False)
         self.value_three = Flatten(data_format = 'channels_last')
         self.value_four = Dense(units = 1, activation = 'tanh', use_bias = False)
+
+        self.final_concat = tf.keras.layers.Concatenate(axis = -1)
 
     def gen_conv2d(self):
         return Conv2D(filters = 256, kernel_size=(3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)
@@ -94,13 +96,15 @@ class AlphaModel(Model):
 
         # output 2
         value = self.value_one(x)
-        value = self.value_one_norm(x)
+        value = self.value_one_norm(value)
         value = relu(value)
         value = self.value_two(value)
         value = self.value_three(value)
         value = self.value_four(value)
+
+        result = self.final_concat([policy, value])
         
-        return policy, value
+        return result
 
 ##    def train_step(self, data):
 ##        # Unpack the data. Its structure depends on your model and
@@ -124,26 +128,14 @@ class AlphaModel(Model):
 ##        return {m.name: m.result() for m in self.metrics}
 
     def train_step(self, data):
-        print('hola!')
-        #print(data)
         inputs, targets = data
-        print('input')
-        for thing in inputs:
-            print(thing.shape)
-
-        pol, val = targets
-        print('policy')
-        for thing in pol:
-            print(thing.shape)
-        print('value')
-        for thing in val:
-            print(thing.shape)
 
         with tf.GradientTape() as tape:
             outputs = self(inputs, training = True)
-            losses = [l(t, o) for l, o, t in zip(self.loss_objects, outputs, targets)]
+            loss = self.loss_objects[0](targets, outputs)
+            #losses = [l(t, o) for l, o, t in zip(self.loss_objects, outputs, targets)]
 
-        gradients = tape.gradient(losses, self.trainable_variables)
+        gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
         self.compiled_metrics.update_state(outputs, targets)
         return {m.name: m.result() for m in self.metrics}
@@ -163,32 +155,23 @@ new_inputs = np.array(inputs)
 new_inputs = new_inputs.reshape(1, board_height, board_width, num_channels)
 #print(new_inputs.shape)
 #print(new_inputs)
-p, v = am(new_inputs)
-print(p.shape)
-print(v.shape)
+result = am(new_inputs)
+print(result.shape)
 #am.summary()
 #print(am.optimizer)
 #print(am.compiled_metrics)
 x_data = (inputs, inputs)
 x_data = np.array(x_data)
 #y_data = ((p, v), (p, v))
-y_data = []
-y_data.append([p[0],v[0]])
-y_data.append([p[0],v[0]])
-y_data = tf.convert_to_tensor(y_data)
+y_data = (result[0], result[0])
+y_data = np.array(y_data)
 
 
 print(x_data.shape)
-result = am(x_data)
-#print(x_data)
-#print(y_data)
-#print(y_data.shape)
-#print(y_data.shape)
-#p, v = am(x_data)
-#print(p.shape)
-#print(v.shape)
+print(y_data.shape)
+#result = am(x_data)
+
 am.fit(x = x_data, y = y_data)
-#am.fit(x = x_data, y = y_data)
 
 
 
