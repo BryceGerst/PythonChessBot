@@ -30,74 +30,32 @@ class AlphaModel(Model):
 
         # input layer
         self.input_layer = Conv2D(input_shape = (board_height, board_width, num_channels), filters = 256, kernel_size=(3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)
+        self.input_norm = self.gen_norm()
 
-        # Residual tower
-        # block one
-        self.res_a_one = self.gen_conv2d()
-        self.res_a_two = self.gen_conv2d()
-        # block two
-        self.res_b_one = self.gen_conv2d()
-        self.res_b_two = self.gen_conv2d()
-        # block three
-        self.res_c_one = self.gen_conv2d()
-        self.res_c_two = self.gen_conv2d()
-        # block four
-        self.res_d_one = self.gen_conv2d()
-        self.res_d_two = self.gen_conv2d()
-        # block five
-        self.res_e_one = self.gen_conv2d()
-        self.res_e_two = self.gen_conv2d()
-        # block six
-        self.res_f_one = self.gen_conv2d()
-        self.res_f_two = self.gen_conv2d()
-        # block seven
-        self.res_g_one = self.gen_conv2d()
-        self.res_g_two = self.gen_conv2d()
-        # block eight
-        self.res_h_one = self.gen_conv2d()
-        self.res_h_two = self.gen_conv2d()
-        # block nine
-        self.res_i_one = self.gen_conv2d()
-        self.res_i_two = self.gen_conv2d()
-        # block ten
-        self.res_j_one = self.gen_conv2d()
-        self.res_j_two = self.gen_conv2d()
-        # block eleven
-        self.res_k_one = self.gen_conv2d()
-        self.res_k_two = self.gen_conv2d()
-        # block twelve
-        self.res_l_one = self.gen_conv2d()
-        self.res_l_two = self.gen_conv2d()
-        # block thirteen
-        self.res_m_one = self.gen_conv2d()
-        self.res_m_two = self.gen_conv2d()
-        # block fourteen
-        self.res_n_one = self.gen_conv2d()
-        self.res_n_two = self.gen_conv2d()
-        # block fifteen
-        self.res_o_one = self.gen_conv2d()
-        self.res_o_two = self.gen_conv2d()
-        # block sixteen
-        self.res_p_one = self.gen_conv2d()
-        self.res_p_two = self.gen_conv2d()
-        # block seventeen
-        self.res_q_one = self.gen_conv2d()
-        self.res_q_two = self.gen_conv2d()
-        # block eighteen
-        self.res_r_one = self.gen_conv2d()
-        self.res_r_two = self.gen_conv2d()
-        # block nineteen
-        self.res_s_one = self.gen_conv2d()
-        self.res_s_two = self.gen_conv2d()
-        # end residual tower
+        # residual tower
+        self.first_layers = []
+        self.second_layers = []
+        self.first_norm_layers = []
+        self.second_norm_layers = []
+        self.third_norm_layers = []
+        self.fourth_norm_layers = []
+        for _ in range(19):
+            self.first_layers.append(self.gen_conv2d())
+            self.first_norm_layers.append(self.gen_norm())
+            self.second_layers.append(self.gen_conv2d())
+            self.second_norm_layers.append(self.gen_norm())
+            self.third_norm_layers.append(self.gen_norm())
+            self.fourth_norm_layers.append(self.gen_norm())
 
         # policy head
         self.policy_one = self.gen_conv2d()
+        self.policy_one_norm = self.gen_norm()
         self.policy_two = Conv2D(filters = 73, kernel_size = (3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False) # not sure about kernel size, stride, bias, or batch normalization for this one
         self.policy_three = Flatten(data_format = 'channels_last')
 
         # value head
         self.value_one = Conv2D(filters = 1, kernel_size=(1, 1), strides = 1, data_format = 'channels_last', use_bias = False)
+        self.value_one_norm = self.gen_norm()
         self.value_two = Dense(units = 256, activation = 'relu', use_bias = False)
         self.value_three = Flatten(data_format = 'channels_last')
         self.value_four = Dense(units = 1, activation = 'tanh', use_bias = False)
@@ -105,213 +63,39 @@ class AlphaModel(Model):
     def gen_conv2d(self):
         return Conv2D(filters = 256, kernel_size=(3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)
 
-    def rect_norm(self, val):
-        return relu(BatchNormalization(axis = -1)(val))
+    def gen_norm(self):
+        return BatchNormalization(axis = -1)
 
     def call(self, x):
         x = self.input_layer(x)
-        x = self.rect_norm(x)
+        x = self.input_norm(x)
+        x = relu(x)
 
-        # block 1
-        x_skip = x
-        x = self.res_a_one(x)
-        x = self.rect_norm(x)
-        x = self.res_a_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_a_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x) 
-        # block 2
-        x_skip = x
-        x = self.res_b_one(x)
-        x = self.rect_norm(x)
-        x = self.res_b_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_b_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 3
-        x_skip = x
-        x = self.res_c_one(x)
-        x = self.rect_norm(x)
-        x = self.res_c_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_c_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 4
-        x_skip = x
-        x = self.res_d_one(x)
-        x = self.rect_norm(x)
-        x = self.res_d_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_d_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 5
-        x_skip = x
-        x = self.res_e_one(x)
-        x = self.rect_norm(x)
-        x = self.res_e_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_e_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 6
-        x_skip = x
-        x = self.res_f_one(x)
-        x = self.rect_norm(x)
-        x = self.res_f_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_f_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 7
-        x_skip = x
-        x = self.res_g_one(x)
-        x = self.rect_norm(x)
-        x = self.res_g_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_g_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 8
-        x_skip = x
-        x = self.res_h_one(x)
-        x = self.rect_norm(x)
-        x = self.res_h_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_h_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 9
-        x_skip = x
-        x = self.res_i_one(x)
-        x = self.rect_norm(x)
-        x = self.res_i_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_i_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 10
-        x_skip = x
-        x = self.res_j_one(x)
-        x = self.rect_norm(x)
-        x = self.res_j_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_j_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 11
-        x_skip = x
-        x = self.res_k_one(x)
-        x = self.rect_norm(x)
-        x = self.res_k_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_k_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 12
-        x_skip = x
-        x = self.res_l_one(x)
-        x = self.rect_norm(x)
-        x = self.res_l_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_l_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 13
-        x_skip = x
-        x = self.res_m_one(x)
-        x = self.rect_norm(x)
-        x = self.res_m_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_m_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 14
-        x_skip = x
-        x = self.res_n_one(x)
-        x = self.rect_norm(x)
-        x = self.res_n_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_n_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 15
-        x_skip = x
-        x = self.res_o_one(x)
-        x = self.rect_norm(x)
-        x = self.res_o_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_o_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 16
-        x_skip = x
-        x = self.res_p_one(x)
-        x = self.rect_norm(x)
-        x = self.res_p_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_p_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 17
-        x_skip = x
-        x = self.res_q_one(x)
-        x = self.rect_norm(x)
-        x = self.res_q_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_q_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 18
-        x_skip = x
-        x = self.res_r_one(x)
-        x = self.rect_norm(x)
-        x = self.res_r_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_r_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
-        # block 19
-        x_skip = x
-        x = self.res_s_one(x)
-        x = self.rect_norm(x)
-        x = self.res_s_two(x)
-        x = BatchNormalization(axis = -1)(x)
-        x_skip = self.res_s_two(x_skip)
-        x_skip = BatchNormalization(axis = -1)(x_skip)
-        x = (x + x_skip)
-        x = self.rect_norm(x)
+        # residual tower
+        for i in range(19):
+            x_skip = x
+            x = self.first_layers[i](x)
+            x = self.first_norm_layers[i](x)
+            x = relu(x)
+            x = self.second_layers[i](x)
+            x = self.second_norm_layers[i](x)
+            x_skip = self.second_layers[i](x_skip)
+            x_skip = self.third_norm_layers[i](x_skip)
+            x = (x + x_skip)
+            x = self.fourth_norm_layers[i](x)
+            
 
         # output 1
         policy = self.policy_one(x)
-        policy = self.rect_norm(policy)
+        policy = self.policy_one_norm(policy)
+        policy = relu(policy)
         policy = self.policy_two(policy)
         policy = self.policy_three(policy)
 
         # output 2
         value = self.value_one(x)
-        value = self.rect_norm(value)
+        value = self.value_one_norm(x)
+        value = relu(value)
         value = self.value_two(value)
         value = self.value_three(value)
         value = self.value_four(value)
@@ -341,7 +125,19 @@ class AlphaModel(Model):
 
     def train_step(self, data):
         print('hola!')
+        #print(data)
         inputs, targets = data
+        print('input')
+        for thing in inputs:
+            print(thing.shape)
+
+        pol, val = targets
+        print('policy')
+        for thing in pol:
+            print(thing.shape)
+        print('value')
+        for thing in val:
+            print(thing.shape)
 
         with tf.GradientTape() as tape:
             outputs = self(inputs, training = True)
@@ -368,12 +164,31 @@ new_inputs = new_inputs.reshape(1, board_height, board_width, num_channels)
 #print(new_inputs.shape)
 #print(new_inputs)
 p, v = am(new_inputs)
-#print(p.shape)
-#print(v.shape)
+print(p.shape)
+print(v.shape)
 #am.summary()
 #print(am.optimizer)
 #print(am.compiled_metrics)
-am.fit(x = new_inputs, y = (p, v))
+x_data = (inputs, inputs)
+x_data = np.array(x_data)
+#y_data = ((p, v), (p, v))
+y_data = []
+y_data.append([p[0],v[0]])
+y_data.append([p[0],v[0]])
+y_data = tf.convert_to_tensor(y_data)
+
+
+print(x_data.shape)
+result = am(x_data)
+#print(x_data)
+#print(y_data)
+#print(y_data.shape)
+#print(y_data.shape)
+#p, v = am(x_data)
+#print(p.shape)
+#print(v.shape)
+am.fit(x = x_data, y = y_data)
+#am.fit(x = x_data, y = y_data)
 
 
 
