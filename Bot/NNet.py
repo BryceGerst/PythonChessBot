@@ -24,10 +24,6 @@ class AlphaModel(Model):
     def __init__(self):
         super(AlphaModel, self).__init__()
 
-        # categorical cross entropy is the loss function for the policy
-        # mean squared error is the loss function for the value
-        self.loss_objects = [tf.keras.losses.CategoricalCrossentropy(from_logits = False), tf.keras.losses.MeanSquaredError()]
-
         # input layer
         self.input_layer = Conv2D(input_shape = (board_height, board_width, num_channels), filters = 256, kernel_size=(3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)
         self.input_norm = self.gen_norm()
@@ -102,9 +98,9 @@ class AlphaModel(Model):
         value = self.value_three(value)
         value = self.value_four(value)
 
-        result = self.final_concat([policy, value])
+        #result = self.final_concat([policy, value])
         
-        return result
+        return policy, value#result
 
 ##    def train_step(self, data):
 ##        # Unpack the data. Its structure depends on your model and
@@ -132,7 +128,7 @@ class AlphaModel(Model):
 
         with tf.GradientTape() as tape:
             outputs = self(inputs, training = True)
-            loss = self.loss_objects[0](targets, outputs)
+            loss = self.compiled_loss(targets, outputs)
             #losses = [l(t, o) for l, o, t in zip(self.loss_objects, outputs, targets)]
 
         gradients = tape.gradient(loss, self.trainable_variables)
@@ -146,8 +142,15 @@ class AlphaModel(Model):
 
 
 am = AlphaModel()
+# categorical cross entropy is the loss function for the policy
+# mean squared error is the loss function for the value
+loss_objects = [tf.keras.losses.CategoricalCrossentropy(from_logits = False), tf.keras.losses.MeanSquaredError()]
 opt = tf.keras.optimizers.Adam(learning_rate = 0.02)
-am.compile(optimizer = opt, metrics = ['accuracy'])
+am.compile(optimizer = opt, metrics = ['accuracy'], loss = loss_objects)
+
+
+
+
 g = Game()
 inputs = g.get_nnet_inputs()
 new_inputs = np.array(inputs)
@@ -156,19 +159,19 @@ new_inputs = new_inputs.reshape(1, board_height, board_width, num_channels)
 #print(new_inputs.shape)
 #print(new_inputs)
 result = am(new_inputs)
-print(result.shape)
+#print(result.shape)
 #am.summary()
 #print(am.optimizer)
 #print(am.compiled_metrics)
 x_data = (inputs, inputs)
 x_data = np.array(x_data)
-#y_data = ((p, v), (p, v))
-y_data = (result[0], result[0])
-y_data = np.array(y_data)
-
-
 print(x_data.shape)
-print(y_data.shape)
+#y_data = ((p, v), (p, v))
+y_data = ([result[0][0], result[1][0]], [result[0][0], result[1][0]])
+#y_data = np.array(y_data)
+#print(y_data.shape)
+
+
 #result = am(x_data)
 
 am.fit(x = x_data, y = y_data)

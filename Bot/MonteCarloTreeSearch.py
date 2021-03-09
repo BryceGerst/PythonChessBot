@@ -55,8 +55,14 @@ class MCTS:
         return -v
 
     def pi(self, s):
-        if (s in self.P):
-            return self.P[s]
+        if (s in self.N):
+            improved_policy = np.zeros([4672], np.dtype(float))
+            total_actions_checked = sum(N[s])
+            
+            for i in range(len(N[s])):
+                improved_policy[i] = (N[s][i] / total_actions_checked)
+                
+            return improved_policy
         else:
             print('error, gamestate not found')
             return None
