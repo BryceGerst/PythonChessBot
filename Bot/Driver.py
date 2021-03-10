@@ -1,13 +1,8 @@
 import sys
-sys.path.append('../ChessEngine/')
-from Game import Game
-from NNet import NNet
+sys.path.append('../GUI/')
+from BotDisplay import Display
 import Bot
-import tensorflow as tf
-# suppresses the unhelpful warnings tensorflow gives
-#tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
-start = Game()
+disp = Display()
 
-
-nnet = Bot.train_nnet(1,1)
+nnet = Bot.do_self_play(1,1,disp)

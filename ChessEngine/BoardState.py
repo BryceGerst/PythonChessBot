@@ -79,17 +79,20 @@ class Board:
 
         self.gen_legal_moves()
 
-    def nnet_inputs(self):
-        num_channels = 12 # should be upped to 19 eventually!!
+    def nnet_inputs(self, times_at_board):
+        num_channels = 20
         
         inputs = np.zeros([self.num_rows, self.num_cols, num_channels], np.dtype(float))
 
         player_color = self.team_to_move
+        player_num = (0 if player_color else 1)
         total_moves = self.total_moves
         moves_since_advancement = self.moves_since_advancement
 
         player_castling = self.get_castling_rights(player_color)
+        player_castle_nums = [(0 if player_castling[0] else 1), (0 if player_castling[1] else 1)]
         enemy_castling = self.get_castling_rights(not player_color)
+        enemy_castle_nums = [(0 if enemy_castling[0] else 1), (0 if enemy_castling[1] else 1)]
 
         # the following are the channel numbers of each piece type, with 6 being added if the piece is on the enemy team
         pawn_num = 0
@@ -129,9 +132,18 @@ class Board:
                 inputs[row][col][king_num + modifier] = 1
 
         # TODO: add 6 more layers composed of the player's color, total moves, move since advancement, and castling rights for both teams
+        for row in range(self.num_rows):
+            for col in range(self.num_cols):
+                inputs[row][col][12] = player_num
+                inputs[row][col][13] = total_moves
+                inputs[row][col][14] = moves_since_advancement
+                inputs[row][col][15] = player_castle_nums[0]
+                inputs[row][col][16] = player_castle_nums[1]
+                inputs[row][col][17] = enemy_castle_nums[0]
+                inputs[row][col][18] = enemy_castle_nums[1]
+                inputs[row][col][19] = times_at_board
 
-        return inputs
-        
+        return inputs        
 
     def get_board_hash(self):
         ret_val = None

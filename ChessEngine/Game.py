@@ -32,6 +32,7 @@ class Game:
 
             board_id = self.board.get_board_hash()
             self.board_id = board_id
+            # print('do: ' + str(board_id))
             if (board_id in self.times_at_board):
                 self.times_at_board[board_id] = self.times_at_board[board_id] + 1
                 # print('duplicate board')
@@ -61,6 +62,9 @@ class Game:
             self.board.undo_move(undo_info[0], undo_info[1], undo_info[2], undo_info[3])
             board_id = self.board.get_board_hash()
             self.board_id = board_id
+            # print('undo: ' + str(board_id))
+            if (self.board_id not in self.times_at_board):
+                print('undid to unrecognized board')
         else:
             print('cannot undo past starting board')
 
@@ -68,9 +72,10 @@ class Game:
         return self.board_id
 
     def get_nnet_inputs(self):
-        base = self.board.nnet_inputs()
-        #base.append(self.times_at_board[self.board_id]) # the board doesn't store this information so it needs to be added on
-        return base
+        if (self.board_id in self.times_at_board):
+            return self.board.nnet_inputs(self.times_at_board[self.board_id])
+        else:
+            return self.board.nnet_inputs(0)
 
     def is_game_over(self):
 
@@ -115,34 +120,32 @@ class Game:
                     insufficient_material = False
 
         if (insufficient_material):
-            print('Draw by insufficient material')
+            #print('Draw by insufficient material')
             return 0 # draw by insufficient material
 
         # threefold repetition
         if self.board_id not in self.times_at_board:
-            print(self.board_id)
+            print('could not find ' + str(self.board_id))
             print(self.times_at_board)
-
-        if (not self.board_id in self.times_at_board):
-                print('got tripped up when checking for 3fold repetition')
-        if (self.times_at_board[self.board_id] == 3):
-            print('Draw by threefold repetition')
+            print('ERROR: got tripped up when checking for 3fold repetition')
+        elif (self.times_at_board[self.board_id] == 3):
+            #print('Draw by threefold repetition')
             return 0 # draw by threefold repetition
 
         
         # 50 moves without capturing or moving any pawns
         if (self.board.moves_since_advancement >= 100): # 100 because the board is counting plys, or half-moves
-            print('Draw due to 50 moves without advancement')
+            #print('Draw due to 50 moves without advancement')
             return 0 # draw by the 50 move rule
             
         
         move_list = self.board.get_moves_from_state()
         if (len(move_list) == 0):
             if (self.board.team_in_check(self.board.team_to_move)):
-                print('Checkmate')
+                #print('Checkmate')
                 return 1 # checkmate
             else:
-                print('Stalemate')
+                #print('Stalemate')
                 return 0 # stalemate
         else:
             return -1 # game still going

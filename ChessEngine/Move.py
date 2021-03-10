@@ -43,7 +43,7 @@ class Move:
             index = nnet_ids[code]
             return index
         else:
-            print('Critical error: code ' + str(code) + ' not found for move ' + str(self))
+            print('Critical error: code ' + str(code) + ' not found for move ' + str(self) + str(self.piece_name))
             return -1
         
 
@@ -106,7 +106,7 @@ for row in range(8):
         for x_dir in directions:
             for name in under_promotions:
                 new_row = row + 1 # the board should be oriented for the player moving as far as the neural network is concerned
-                new_col = col
+                new_col = col + x_dir
                 num = encode(row, col, new_row, new_col, is_promotion = True, end_piece = name, direction = x_dir)
                 if (num != -1):
                     nnet_ids[num] = count

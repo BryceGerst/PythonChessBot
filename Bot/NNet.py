@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, BatchNormalization, Dense, Flatten, Input, Add
 from tensorflow.keras import Model
-from tensorflow.keras.activations import relu
+from tensorflow.keras.activations import relu, sigmoid
 import numpy as np
 import sys
 sys.path.append('../ChessEngine/')
@@ -9,7 +9,7 @@ from Game import Game
 
 board_width = 8
 board_height = 8
-num_channels = 12 # will be increased later to 19
+num_channels = 20
 
 loss_fns = [tf.keras.losses.CategoricalCrossentropy(from_logits = False), tf.keras.losses.MeanAbsoluteError()]
 optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3)
@@ -46,6 +46,7 @@ def init_nnet():
     p = relu(p)
     p = Conv2D(filters = 73, kernel_size = (3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)(p) # not sure about kernel size, stride, bias, or batch normalization for this one
     p = Flatten(data_format = 'channels_last')(p)
+    p = sigmoid(p)
 
     v = Conv2D(filters = 1, kernel_size=(1, 1), strides = 1, data_format = 'channels_last', use_bias = False)(x)
     v = gen_norm()(v)
@@ -64,7 +65,7 @@ def train_nnet(nnet, examples):
     new_nnet.compile(optimizer = optimizer, loss = loss_fns, metrics = ['accuracy'], loss_weights = [0.5, 1])
 
     x_train, p_train, v_train = zip(*examples)
-    new_nnet.fit(np.array(x_train), [np.array(p_train), np.array(v_train)], epochs = 500, verbose = 2)
+    new_nnet.fit(np.array(x_train), [np.array(p_train), np.array(v_train)], epochs = 20, verbose = 2) # 500 epochs
     return new_nnet
 
 
