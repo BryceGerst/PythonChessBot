@@ -22,8 +22,8 @@ class Game:
                 self.times_at_board[board_id] = 1
             
             #game_status = self.is_game_over()
-            return True
-        return False
+            return undo_info[0] # the actual move object corresponding to the string
+        return None
 
     def do_move(self, move):
         undo_info = self.board.do_move(move)
@@ -55,9 +55,10 @@ class Game:
             
             if (not self.board_id in self.times_at_board):
                 print('got tripped up when undoing')
-            self.times_at_board[self.board_id] = self.times_at_board[self.board_id] - 1
-            if (self.times_at_board[self.board_id] == 0):
-                del self.times_at_board[self.board_id]
+            else:
+                self.times_at_board[self.board_id] = self.times_at_board[self.board_id] - 1
+                if (self.times_at_board[self.board_id] == 0):
+                    del self.times_at_board[self.board_id]
             
             self.board.undo_move(undo_info[0], undo_info[1], undo_info[2], undo_info[3])
             board_id = self.board.get_board_hash()
@@ -65,6 +66,7 @@ class Game:
             # print('undo: ' + str(board_id))
             if (self.board_id not in self.times_at_board):
                 print('undid to unrecognized board')
+                print('move: ' + str(undo_info[0]))
         else:
             print('cannot undo past starting board')
 
@@ -75,9 +77,10 @@ class Game:
         if (self.board_id in self.times_at_board):
             return self.board.nnet_inputs(self.times_at_board[self.board_id])
         else:
+            print('error, didnt recognize current board')
             return self.board.nnet_inputs(0)
 
-    def is_game_over(self):
+    def is_game_over(self, print_reason = False):
 
         # insufficient material list:
         # king vs king
@@ -120,7 +123,8 @@ class Game:
                     insufficient_material = False
 
         if (insufficient_material):
-            #print('Draw by insufficient material')
+            if (print_reason):
+                print('Draw by insufficient material')
             return 0 # draw by insufficient material
 
         # threefold repetition
@@ -129,23 +133,27 @@ class Game:
             print(self.times_at_board)
             print('ERROR: got tripped up when checking for 3fold repetition')
         elif (self.times_at_board[self.board_id] == 3):
-            #print('Draw by threefold repetition')
+            if (print_reason):
+                print('Draw by threefold repetition')
             return 0 # draw by threefold repetition
 
         
         # 50 moves without capturing or moving any pawns
         if (self.board.moves_since_advancement >= 100): # 100 because the board is counting plys, or half-moves
-            #print('Draw due to 50 moves without advancement')
+            if (print_reason):
+                print('Draw due to 50 moves without advancement')
             return 0 # draw by the 50 move rule
             
         
         move_list = self.board.get_moves_from_state()
         if (len(move_list) == 0):
             if (self.board.team_in_check(self.board.team_to_move)):
-                #print('Checkmate')
+                if (print_reason):
+                    print('Checkmate')
                 return 1 # checkmate
             else:
-                #print('Stalemate')
+                if (print_reason):
+                    print('Stalemate')
                 return 0 # stalemate
         else:
             return -1 # game still going

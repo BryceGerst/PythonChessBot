@@ -1,7 +1,12 @@
 import pygame, sys, random
 sys.path.append('../ChessEngine/')
 from Game import Game
-#import test_game
+sys.path.append('../Bot/')
+import Bot
+from NNet import init_nnet, train_nnet
+from MonteCarloTreeSearch import MCTS
+import numpy as np
+import tensorflow as tf
 
 
 pygame.init()
@@ -76,6 +81,13 @@ move_noises = []
 for i in range(0, 7):
     move_noises.append(load_sound('pieceMove' + str(i) + '.wav'))
 
+
+# manual input to bot example
+def make_policy(move, team):
+    policy = np.zeros([4672], np.dtype(float))
+    policy[move.get_nnet_index(team)] = 1
+    return policy
+
 # main loop
 
 ChessGame = Game()#test_game.give_game()
@@ -94,37 +106,38 @@ for i in range(512):
     keys_down_last_frame.append(False)
 refresh_display = True
 
-while (playing):
+num_games = 2
+games_played = 0
+is_bot_turn = False
+
+total_examples = []
+current_example = []
+
+#nnet = tf.keras.models.load_model('model2')#init_nnet() # later I will load one in
+nnet = init_nnet()
+nnet.load_weights('weights/model_04_weights')
+mcts = MCTS()
+
+while (playing and games_played < num_games):
     for event in pygame.event.get():
         if (event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]): # key 27 is escape
             playing = False
 
-    keys_down = pygame.key.get_pressed()
-    if (keys_down[pygame.K_u]):# and not keys_down_last_frame[pygame.K_u]):
-        ChessGame.undo_move()
-        print('undo')
+    if (not is_bot_turn):
+        clicked = False
+        mouse_down = pygame.mouse.get_pressed()[0]
+        clicked = mouse_down and not mouse_down_last_frame
+    else:
+        bot_move = Bot.get_bot_move(ChessGame, nnet, ChessGame.get_team_to_move(), mcts = mcts, examples = current_example)
+        ChessGame.do_move(bot_move)
+        random.choice(move_noises).play()
         refresh_display = True
         click1_pos = (-1, -1)
         click2_pos = (-1, -1)
+        clicked = False
         highlight_coords = (-1, 1)
         possible_move_coords = []
-    elif (keys_down[pygame.K_b]):# and not keys_down_last_frame[pygame.K_b]):
-        moves = ChessGame.get_legal_moves()
-        if (len(moves) > 0):
-            move = random.choice(moves)
-            ChessGame.do_move(move)
-            print(move)
-            random.choice(move_noises).play() # make a noise if the move was valid
-
-        refresh_display = True
-        click1_pos = (-1, -1)
-        click2_pos = (-1, -1)
-        highlight_coords = (-1, 1)
-        possible_move_coords = []
-
-    clicked = False
-    mouse_down = pygame.mouse.get_pressed()[0]
-    clicked = mouse_down and not mouse_down_last_frame
+        is_bot_turn = False
 
     refresh_display = (refresh_display or clicked)
 
@@ -148,9 +161,14 @@ while (playing):
                 possible_move_coords = []
             else:
                 move_str = (chr(start_col + A) + str(start_row + 1) + chr(end_col + A) + str(end_row + 1))
-                if (ChessGame.do_str_move(move_str) is not None):
-                    print(move_str)
-                    random.choice(move_noises).play() # make a noise if the move was valid
+                team = ChessGame.get_team_to_move()
+                nnet_inputs = ChessGame.get_nnet_inputs()
+                real_move = ChessGame.do_str_move(move_str)
+                if (real_move is not None):
+                    policy = make_policy(real_move, team) # the team just changed, but we want the old
+                    current_example.append([nnet_inputs, policy, None])
+                    random.choice(move_noises).play()
+                    is_bot_turn = True
                 click1_pos = (-1, -1)
                 click2_pos = (-1, -1)
                 highlight_coords = (-1, 1)
@@ -196,12 +214,26 @@ while (playing):
         pygame.display.update()
             
     mouse_down_last_frame = mouse_down
-    keys_down_last_frame = keys_down
     refresh_display = False
 
-
+    result = ChessGame.is_game_over(print_reason = True)
+    if (result != -1):
+        current_example = Bot.assign_rewards(current_example, result)
+        games_played += 1
+        total_examples += current_example
+        is_bot_turn = not (games_played < (num_games / 2))
+        ChessGame = Game()
+        refresh_display = True
+        current_example = []
 
 pygame.quit()
+
+if (playing):
+    new_nnet = train_nnet(nnet, total_examples)
+    new_nnet.save_weights('weights/model_05_weights')
+
+
+
 sys.exit()
 
     

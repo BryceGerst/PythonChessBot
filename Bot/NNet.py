@@ -65,7 +65,7 @@ def train_nnet(nnet, examples):
     new_nnet.compile(optimizer = optimizer, loss = loss_fns, metrics = ['accuracy'], loss_weights = [0.5, 1])
 
     x_train, p_train, v_train = zip(*examples)
-    new_nnet.fit(np.array(x_train), [np.array(p_train), np.array(v_train)], epochs = 20, verbose = 2) # 500 epochs
+    new_nnet.fit(np.array(x_train), [np.array(p_train), np.array(v_train)], epochs = 100, verbose = 2) # 500 epochs
     return new_nnet
 
 

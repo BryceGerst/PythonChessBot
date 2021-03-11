@@ -85,7 +85,7 @@ class MCTS:
             return improved_policy
         else:
             print('error, gamestate not found')
-            return None
+            return np.zeros([4672], np.dtype(float))
     
 
 

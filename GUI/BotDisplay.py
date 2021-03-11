@@ -90,6 +90,7 @@ class Display:
 
     def refresh(self):
         self.screen.fill((255, 255, 255))
+        random.choice(move_noises).play()
         is_dark_square = False
         for y in range(0, screen_h, square_side_length):
             for x in range(0, screen_w, square_side_length):

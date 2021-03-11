@@ -29,10 +29,10 @@ def do_self_play(num_iters, num_episodes, display = None):
         if (win_percentage > 0.55):
             improvements += 1
             nnet = new_nnet
-            nnet.save(filename = ('model' + str(improvement)))
+            nnet.save('model' + str(improvement))
     return nnet
 
-def get_bot_move(game, nnet, whites_turn, mcts = None, examples = None, best_move_only = False, num_sims = 5): # 800 is probably too big for our tastes, but it is what AlphaZero used
+def get_bot_move(game, nnet, whites_turn, mcts = None, examples = None, best_move_only = False, num_sims = 20): # 800 is probably too big for our tastes, but it is what AlphaZero used
     if (mcts is None):
         mcts = MCTS()
 
@@ -63,7 +63,11 @@ def get_bot_move(game, nnet, whites_turn, mcts = None, examples = None, best_mov
     if (not best_move_only):
         #print(valid_moves)
         #print(valid_move_probs)
-        move = np.random.choice(valid_moves, 1, p = valid_move_probs)[0]
+        try:
+            move = np.random.choice(valid_moves, 1, p = valid_move_probs)[0]
+        except:
+            print('couldnt randomly select move from policy')
+            move = random.choice(game.get_legal_moves())
         #print(move)
             
     if (move == None):
@@ -94,12 +98,8 @@ def execute_episode(nnet, display):
         if (display is not None):
             display.refresh()
             
-        status = game.is_game_over()
+        status = game.is_game_over(print_reason = True)
         if (status != -1):
-            if (status == 0):
-                print('Draw')
-            else:
-                print('Checkmate')
             examples = assign_rewards(examples, status)
             return examples
             
@@ -149,7 +149,7 @@ def pit(nnet_one, nnet_two, display, num_games = 1):
                 display.refresh()
 
             game.do_move(move)
-            status = game.is_game_over()
+            status = game.is_game_over(print_reason = True)
             if (status != -1):
                 if (status == 0):
                     print('new bot drew')
