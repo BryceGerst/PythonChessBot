@@ -4,12 +4,14 @@ from MonteCarloTreeSearch import MCTS
 from Game import Game
 from NNet import init_nnet, train_nnet
 import numpy as np
+import tensorflow as tf
 import time
 
 def do_self_play(num_iters, num_episodes, display = None):
     nnet = init_nnet()
+    nnet.load_weights('weights/model_08_weights')
     examples = []
-    improvement = 0
+    improvements = 8
     for i in range(num_iters):
         for e in range(num_episodes):
             example = execute_episode(nnet, display)
@@ -29,10 +31,10 @@ def do_self_play(num_iters, num_episodes, display = None):
         if (win_percentage > 0.55):
             improvements += 1
             nnet = new_nnet
-            nnet.save('model' + str(improvement))
+            new_nnet.save_weights('weights/model_0' + str(improvements) + '_weights')
     return nnet
 
-def get_bot_move(game, nnet, whites_turn, mcts = None, examples = None, best_move_only = False, num_sims = 20): # 800 is probably too big for our tastes, but it is what AlphaZero used
+def get_bot_move(game, nnet, whites_turn, mcts = None, examples = None, best_move_only = False, num_sims = 10): # 800 is probably too big for our tastes, but it is what AlphaZero used
     if (mcts is None):
         mcts = MCTS()
 
@@ -112,7 +114,7 @@ def assign_rewards(examples, reward):
 
     return examples
 
-def pit(nnet_one, nnet_two, display, num_games = 1):
+def pit(nnet_one, nnet_two, display, num_games = 5):
     num_wins = 0
     for i in range(num_games):
         print('------------------New game------------------')

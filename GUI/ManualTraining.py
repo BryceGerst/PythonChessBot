@@ -106,7 +106,7 @@ for i in range(512):
     keys_down_last_frame.append(False)
 refresh_display = True
 
-num_games = 2
+num_games = 6
 games_played = 0
 is_bot_turn = False
 
@@ -115,7 +115,7 @@ current_example = []
 
 #nnet = tf.keras.models.load_model('model2')#init_nnet() # later I will load one in
 nnet = init_nnet()
-nnet.load_weights('weights/model_04_weights')
+nnet.load_weights('weights/model_10_weights')
 mcts = MCTS()
 
 while (playing and games_played < num_games):
@@ -128,7 +128,7 @@ while (playing and games_played < num_games):
         mouse_down = pygame.mouse.get_pressed()[0]
         clicked = mouse_down and not mouse_down_last_frame
     else:
-        bot_move = Bot.get_bot_move(ChessGame, nnet, ChessGame.get_team_to_move(), mcts = mcts, examples = current_example)
+        bot_move = Bot.get_bot_move(ChessGame, nnet, ChessGame.get_team_to_move(), mcts = mcts, examples = current_example, best_move_only = True)
         ChessGame.do_move(bot_move)
         random.choice(move_noises).play()
         refresh_display = True
@@ -230,7 +230,7 @@ pygame.quit()
 
 if (playing):
     new_nnet = train_nnet(nnet, total_examples)
-    new_nnet.save_weights('weights/model_05_weights')
+    new_nnet.save_weights('weights/model_11_weights')
 
 
 

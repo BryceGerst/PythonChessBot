@@ -89,6 +89,7 @@ class Display:
         self.ChessGame = game
 
     def refresh(self):
+        pygame.event.get()
         self.screen.fill((255, 255, 255))
         random.choice(move_noises).play()
         is_dark_square = False

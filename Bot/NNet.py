@@ -56,13 +56,13 @@ def init_nnet():
     v = Dense(units = 1, activation = 'tanh', use_bias = False)(v)
 
     model = Model(inputs = input_layer, outputs = [p,v])
-    model.compile(optimizer = optimizer, loss = loss_fns, metrics = ['accuracy'], loss_weights = [0.5, 1])
+    model.compile(optimizer = optimizer, loss = loss_fns, metrics = ['accuracy'], loss_weights = [1, 1])
 
     return model
 
 def train_nnet(nnet, examples):
     new_nnet = tf.keras.models.clone_model(nnet)
-    new_nnet.compile(optimizer = optimizer, loss = loss_fns, metrics = ['accuracy'], loss_weights = [0.5, 1])
+    new_nnet.compile(optimizer = optimizer, loss = loss_fns, metrics = ['accuracy'], loss_weights = [1, 1])
 
     x_train, p_train, v_train = zip(*examples)
     new_nnet.fit(np.array(x_train), [np.array(p_train), np.array(v_train)], epochs = 100, verbose = 2) # 500 epochs
