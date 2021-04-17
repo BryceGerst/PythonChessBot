@@ -41,12 +41,12 @@ def init_nnet():
         x = gen_norm()(x)
         x = relu(x)
 
-    p = gen_conv2d()(x)
-    p = gen_norm()(p)
-    p = relu(p)
-    p = Conv2D(filters = 73, kernel_size = (3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)(p) # not sure about kernel size, stride, bias, or batch normalization for this one
-    p = Flatten(data_format = 'channels_last')(p)
-    p = sigmoid(p)
+##    p = gen_conv2d()(x)
+##    p = gen_norm()(p)
+##    p = relu(p)
+##    p = Conv2D(filters = 73, kernel_size = (3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)(p) # not sure about kernel size, stride, bias, or batch normalization for this one
+##    p = Flatten(data_format = 'channels_last')(p)
+##    p = sigmoid(p)
 
     v = Conv2D(filters = 1, kernel_size=(1, 1), strides = 1, data_format = 'channels_last', use_bias = False)(x)
     v = gen_norm()(v)
@@ -55,17 +55,17 @@ def init_nnet():
     v = Flatten(data_format = 'channels_last')(v)
     v = Dense(units = 1, activation = 'tanh', use_bias = False)(v)
 
-    model = Model(inputs = input_layer, outputs = [p,v])
-    model.compile(optimizer = optimizer, loss = loss_fns, metrics = ['accuracy'], loss_weights = [1, 1])
+    model = Model(inputs = input_layer, outputs = v)
+    model.compile(optimizer = optimizer, loss = loss_fns[1], metrics = ['accuracy'], loss_weights = 1)
 
     return model
 
 def train_nnet(nnet, examples):
     new_nnet = tf.keras.models.clone_model(nnet)
-    new_nnet.compile(optimizer = optimizer, loss = loss_fns, metrics = ['accuracy'], loss_weights = [1, 1])
+    new_nnet.compile(optimizer = optimizer, loss = loss_fns[1], metrics = ['accuracy'], loss_weights = 1)
 
-    x_train, p_train, v_train = zip(*examples)
-    new_nnet.fit(np.array(x_train), [np.array(p_train), np.array(v_train)], epochs = 100, verbose = 2) # 500 epochs
+    x_train, v_train = zip(*examples)
+    new_nnet.fit(np.array(x_train), np.array(v_train), epochs = 100, verbose = 2) # 500 epochs
     return new_nnet
 
 

@@ -5,6 +5,7 @@ sys.path.append('../Bot/')
 import Bot
 from NNet import init_nnet, train_nnet
 from MonteCarloTreeSearch import MCTS
+from AlphaBetaSearch import ABS
 import numpy as np
 import tensorflow as tf
 
@@ -115,8 +116,8 @@ current_example = []
 
 #nnet = tf.keras.models.load_model('model2')#init_nnet() # later I will load one in
 nnet = init_nnet()
-nnet.load_weights('weights/model_10_weights')
-mcts = MCTS()
+nnet.load_weights('weights/model_01b_weights')
+alpha_beta = ABS()
 
 while (playing and games_played < num_games):
     for event in pygame.event.get():
@@ -128,7 +129,7 @@ while (playing and games_played < num_games):
         mouse_down = pygame.mouse.get_pressed()[0]
         clicked = mouse_down and not mouse_down_last_frame
     else:
-        bot_move = Bot.get_bot_move(ChessGame, nnet, ChessGame.get_team_to_move(), mcts = mcts, examples = current_example, best_move_only = True)
+        bot_move = Bot.get_bot_move(ChessGame, nnet, ChessGame.get_team_to_move(), alpha_beta = alpha_beta, examples = current_example, best_move_only = True)
         ChessGame.do_move(bot_move)
         random.choice(move_noises).play()
         refresh_display = True
@@ -165,8 +166,8 @@ while (playing and games_played < num_games):
                 nnet_inputs = ChessGame.get_nnet_inputs()
                 real_move = ChessGame.do_str_move(move_str)
                 if (real_move is not None):
-                    policy = make_policy(real_move, team) # the team just changed, but we want the old
-                    current_example.append([nnet_inputs, policy, None])
+                    #policy = make_policy(real_move, team) # the team just changed, but we want the old
+                    current_example.append([nnet_inputs, None])
                     random.choice(move_noises).play()
                     is_bot_turn = True
                 click1_pos = (-1, -1)
@@ -230,7 +231,7 @@ pygame.quit()
 
 if (playing):
     new_nnet = train_nnet(nnet, total_examples)
-    new_nnet.save_weights('weights/model_11_weights')
+    new_nnet.save_weights('weights/model_02b_weights')
 
 
 
