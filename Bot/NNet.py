@@ -12,7 +12,7 @@ board_height = 8
 num_channels = 20
 
 loss_fns = [tf.keras.losses.CategoricalCrossentropy(from_logits = False), tf.keras.losses.MeanAbsoluteError()]
-optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3)
+optimizer = tf.keras.optimizers.Adam(learning_rate = 0.2)
 
 def gen_conv2d():
     return Conv2D(filters = 256, kernel_size=(3, 3), strides = 1, padding = 'same', data_format = 'channels_last', use_bias = False)

@@ -56,7 +56,7 @@ class MCTS:
 
         for move in game.get_legal_moves():
             a = move.get_nnet_index(game.get_team_to_move())
-            u = self.Q[s][a] + (self.c_puct * self.P[s][a] * sqrt(sum(self.N[s])) / (1 + self.N[s][a]))
+            u = self.Q[s][a] + (self.c_puct * self.P[s][a] * np.sqrt(np.sum(self.N[s])) / (1 + self.N[s][a]))
             if u > max_u:
                 max_u = u
                 best_move = move

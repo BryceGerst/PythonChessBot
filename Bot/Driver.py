@@ -5,4 +5,4 @@ import Bot
 
 disp = Display()
 
-nnet = Bot.do_self_play(1,4,disp)
+nnet = Bot.do_self_play(2,1,disp)

@@ -106,7 +106,7 @@ for i in range(512):
     keys_down_last_frame.append(False)
 refresh_display = True
 
-num_games = 6
+num_games = 1
 games_played = 0
 is_bot_turn = False
 
